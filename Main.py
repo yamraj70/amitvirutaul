@@ -7,7 +7,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
-# Step 1: Download PDF from the Webpage
 def download_pdf(download_dir):
     options = webdriver.ChromeOptions()
     prefs = {"download.default_directory": download_dir}
@@ -16,15 +15,15 @@ def download_pdf(download_dir):
 
     try:
         driver.get("https://sustainability.google/reports/")
-        time.sleep(3)  # Wait for page to load
+        time.sleep(3)  
 
         pdf_link = driver.find_element(By.XPATH, '/html/body/div/div/div[1]/div/div[2]/ul[1]/li[1]/div[2]/a')
         pdf_link.click()
-        time.sleep(5)  # Wait for download to complete
+        time.sleep(5)  
     finally:
         driver.quit()
 
-# Step 2: Extract Key Data from PDF
+
 def extract_data_from_pdf(pdf_path):
     data = {
         "Scope 1 Emissions": None,
@@ -40,36 +39,35 @@ def extract_data_from_pdf(pdf_path):
         for page in pdf:
             text = page.get_text()
 
-            # Extract GHG Emissions
+            
             if "Scope 1" in text:
                 data["Scope 1 Emissions"] = extract_numeric_value(text, "Scope 1 GHG emissions")
             if "Scope 2" in text:
                 data["Scope 2 Emissions"] = extract_numeric_value(text, "Scope 2 GHG emissions")
 
-            # Hazardous Waste Produced
+            
             if "Hazardous waste" in text:
                 data["Hazardous Waste Produced"] = extract_value_by_context(text, "Hazardous waste produced")
 
-            # Primary Energy Sources
             for source in ["coal", "gas", "diesel", "heating oil", "electricity"]:
                 if source in text:
                     data["Primary Energy Sources"][source] = extract_value_by_context(text, source)
 
-            # Water Consumption
+            
             if "water consumption" in text:
                 data["Water Consumption"] = extract_value_by_context(text, "water consumption")
 
-            # Decarbonization and Offsetting
+            
             if "decarbonization" in text or "carbon offset" in text:
                 data["Decarbonization Plan"] = extract_value_by_context(text, "decarbonization plan")
 
-            # Biodiversity Impact
+            
             if "biodiversity" in text:
                 data["Biodiversity Impact"] = text
 
     return data
 
-# Helper function to extract values from PDF
+
 def extract_numeric_value(text, keyword):
     try:
         start = text.index(keyword) + len(keyword)
@@ -85,9 +83,9 @@ def extract_value_by_context(text, keyword):
         return text[idx:idx + 50].split('.')[0]  # Extract short context
     return None
 
-# Step 3: Generate Pivot Charts
+
 def generate_pivot_charts(data):
-    # GHG Emissions Chart
+    
     ghg_labels = ["Scope 1", "Scope 2"]
     ghg_values = [float(data["Scope 1 Emissions"] or 0), float(data["Scope 2 Emissions"] or 0)]
     plt.figure(figsize=(8, 6))
@@ -95,7 +93,7 @@ def generate_pivot_charts(data):
     plt.title("Scope 1 and Scope 2 GHG Emissions")
     plt.show()
 
-    # Primary Energy Sources Chart
+   
     energy_labels = list(data["Primary Energy Sources"].keys())
     energy_values = [float(v) for v in data["Primary Energy Sources"].values()]
     plt.figure(figsize=(8, 6))
@@ -103,7 +101,7 @@ def generate_pivot_charts(data):
     plt.title("Primary Energy Source Consumption (GWh)")
     plt.show()
 
-# Main Execution
+
 if __name__ == "__main__":
     download_directory = "./downloads"
     os.makedirs(download_directory, exist_ok=True)
